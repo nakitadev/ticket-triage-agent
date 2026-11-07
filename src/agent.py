@@ -1,13 +1,15 @@
 """OpenAI Agents SDK initialization and execution wrappers for ticket triage."""
 
-from typing import Any, List
+from typing import Any, Dict, List
 
-from agents import Agent, RunResult, Runner
+from agents import Agent, RunConfig, RunResult, Runner, trace
 
 from src.config import MAX_AGENT_TURNS, get_openai_model
 from src.prompts import TRIAGE_SYSTEM_PROMPT, format_ticket_prompt
 from src.schemas import SupportTicketInput, TriageDecisionOutput
 from src.tools import TOOLS
+
+TRACE_WORKFLOW_NAME: str = "Support Ticket Triage"
 
 
 def create_triage_agent(model: str | None = None) -> Agent[Any]:
@@ -26,6 +28,23 @@ def create_triage_agent(model: str | None = None) -> Agent[Any]:
         tools=list(TOOLS),
         output_type=TriageDecisionOutput,
     )
+
+
+def _build_trace_metadata(ticket: SupportTicketInput) -> Dict[str, str]:
+    """Build structured OpenAI trace metadata for observability and filtering.
+
+    Args:
+        ticket: The validated support ticket input.
+
+    Returns:
+        Dict[str, str]: Metadata dictionary attached to the OpenAI trace.
+    """
+    return {
+        "ticket_id": ticket.ticket_id,
+        "customer_plan": ticket.customer_info.plan,
+        "region": str(ticket.customer_info.region or "Global"),
+        "seats": str(ticket.customer_info.seats or 1),
+    }
 
 
 def _normalize_tool_name(name: str) -> str:
@@ -79,7 +98,7 @@ def triage_ticket(
     ticket: SupportTicketInput | dict[str, Any],
     model: str | None = None,
 ) -> TriageDecisionOutput:
-    """Synchronously triage a support ticket using the OpenAI Agents SDK.
+    """Synchronously triage a support ticket with OpenAI Agents SDK tracing.
 
     Args:
         ticket: A SupportTicketInput instance or raw ticket dictionary.
@@ -88,18 +107,27 @@ def triage_ticket(
     Returns:
         TriageDecisionOutput: Strictly typed triage classification and response.
     """
-    validated_ticket = SupportTicketInput.model_validate(ticket)
+    validated = SupportTicketInput.model_validate(ticket)
     agent = create_triage_agent(model=model)
-    prompt = format_ticket_prompt(validated_ticket)
-    result = Runner.run_sync(agent, input=prompt, max_turns=MAX_AGENT_TURNS)
-    return _finalize_decision(validated_ticket, result)
+    prompt = format_ticket_prompt(validated)
+    metadata = _build_trace_metadata(validated)
+    run_config = RunConfig(
+        workflow_name=TRACE_WORKFLOW_NAME,
+        group_id=validated.ticket_id,
+        trace_metadata=metadata,
+    )
+    with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=metadata):
+        result = Runner.run_sync(
+            agent, input=prompt, max_turns=MAX_AGENT_TURNS, run_config=run_config
+        )
+    return _finalize_decision(validated, result)
 
 
 async def triage_ticket_async(
     ticket: SupportTicketInput | dict[str, Any],
     model: str | None = None,
 ) -> TriageDecisionOutput:
-    """Asynchronously triage a support ticket using the OpenAI Agents SDK.
+    """Asynchronously triage a support ticket with OpenAI Agents SDK tracing.
 
     Args:
         ticket: A SupportTicketInput instance or raw ticket dictionary.
@@ -108,8 +136,17 @@ async def triage_ticket_async(
     Returns:
         TriageDecisionOutput: Strictly typed triage classification and response.
     """
-    validated_ticket = SupportTicketInput.model_validate(ticket)
+    validated = SupportTicketInput.model_validate(ticket)
     agent = create_triage_agent(model=model)
-    prompt = format_ticket_prompt(validated_ticket)
-    result = await Runner.run(agent, input=prompt, max_turns=MAX_AGENT_TURNS)
-    return _finalize_decision(validated_ticket, result)
+    prompt = format_ticket_prompt(validated)
+    metadata = _build_trace_metadata(validated)
+    run_config = RunConfig(
+        workflow_name=TRACE_WORKFLOW_NAME,
+        group_id=validated.ticket_id,
+        trace_metadata=metadata,
+    )
+    with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=metadata):
+        result = await Runner.run(
+            agent, input=prompt, max_turns=MAX_AGENT_TURNS, run_config=run_config
+        )
+    return _finalize_decision(validated, result)
