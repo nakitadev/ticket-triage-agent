@@ -9,29 +9,28 @@ on:
 
 jobs:
   test:
-    name: Pytest Suite (Python 3.12)
+    name: Pytest Suite (uv + Python 3.12)
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.12"
-          cache: "pip"
+          enable-cache: true
 
-      - name: Install dependencies
+      - name: Set up Python 3.12 and sync dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          uv python install 3.12
+          uv sync --locked
 
       - name: Verify file line-count limit (< 150 lines)
         run: |
-          python -c "
+          uv run python -c "
           import pathlib, sys
-          files = ['main.py', 'api.py', * sorted(str(p) for p in pathlib.Path('src').glob('*.py')), *sorted(str(p) for p in pathlib.Path('tests').glob('*.py'))]
+          files = ['main.py', 'api.py', *sorted(str(p) for p in pathlib.Path('src').glob('*.py')), *sorted(str(p) for p in pathlib.Path('tests').glob('*.py'))]
           failed = False
           for f in files:
               lines = len(pathlib.Path(f).read_text(encoding='utf-8').splitlines())
@@ -44,4 +43,4 @@ jobs:
       - name: Run unit & contract test suite
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: pytest -v
+        run: uv run pytest -v
