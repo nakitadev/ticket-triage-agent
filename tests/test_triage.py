@@ -14,22 +14,11 @@ from pydantic import ValidationError
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from api import app
-from main import load_sample_tickets
+from main import _parse_args, build_custom_ticket, load_sample_tickets
 from src.agent import triage_ticket
 from src.config import get_openai_api_key
-from src.schemas import (
-    ExtractedKeyInfo,
-    NextAction,
-    SupportTicketInput,
-    TriageDecisionOutput,
-    UrgencyLevel,
-)
-from src.tools import (
-    TOOLS,
-    check_system_status,
-    lookup_customer_and_billing,
-    search_knowledge_base,
-)
+from src.schemas import ExtractedKeyInfo, NextAction, SupportTicketInput, TriageDecisionOutput, UrgencyLevel
+from src.tools import TOOLS, check_system_status, lookup_customer_and_billing, search_knowledge_base
 
 
 @pytest.fixture
@@ -39,13 +28,7 @@ def sample_tickets_by_id() -> Dict[str, SupportTicketInput]:
 
 
 def _mock_decision(
-    ticket_id: str,
-    urgency: UrgencyLevel,
-    action: NextAction,
-    lang: str,
-    tools: List[str],
-    kb: str,
-    reply: str,
+    ticket_id: str, urgency: UrgencyLevel, action: NextAction, lang: str, tools: List[str], kb: str, reply: str
 ) -> TriageDecisionOutput:
     """Create a deterministic TriageDecisionOutput fixture for unit tests."""
     return TriageDecisionOutput(
@@ -67,11 +50,11 @@ def _mock_decision(
     )
 
 
-def test_sample_tickets_and_schema_validation(
-    sample_tickets_by_id: Dict[str, SupportTicketInput],
-) -> None:
-    """Verify sample tickets load cleanly and invalid urgency enums are rejected."""
+def test_sample_tickets_and_schema_validation(sample_tickets_by_id: Dict[str, SupportTicketInput]) -> None:
+    """Verify sample tickets, custom CLI ticket builder, and schema validation."""
     assert list(sample_tickets_by_id.keys()) == ["TCK-001", "TCK-002", "TCK-003"]
+    custom = build_custom_ticket(_parse_args(["-m", "Cannot export PDF", "--plan", "Pro", "--region", "Asia"]))
+    assert custom.ticket_id == "TCK-CUSTOM" and custom.customer_info.plan == "Pro" and custom.messages[0].text == "Cannot export PDF"
     with pytest.raises(ValidationError):
         SupportTicketInput.model_validate({"ticket_id": "BAD", "customer_info": {}, "messages": []})
     with pytest.raises(ValidationError):
@@ -86,9 +69,7 @@ def test_sample_tickets_and_schema_validation(
         ("TCK-003", "Pro", "macOS Desktop v2.4.1"),
     ],
 )
-def test_lookup_customer_and_billing_tool(
-    ticket_id: str, expected_plan: str, expected_snippet: str
-) -> None:
+def test_lookup_customer_and_billing_tool(ticket_id: str, expected_plan: str, expected_snippet: str) -> None:
     """Verify lookup_customer_and_billing returns accurate billing/SLA data per ticket."""
     raw = lookup_customer_and_billing(ticket_id)
     assert json.loads(raw)["plan"] == expected_plan and expected_snippet in raw
