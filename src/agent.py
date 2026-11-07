@@ -28,6 +28,11 @@ def create_triage_agent(model: str | None = None) -> Agent[Any]:
     )
 
 
+def _normalize_tool_name(name: str) -> str:
+    """Strip any 'functions.' prefix from a tool name."""
+    return name.removeprefix("functions.").strip()
+
+
 def _extract_invoked_tools(result: RunResult) -> List[str]:
     """Extract ordered, deduplicated tool names invoked during an agent run.
 
@@ -41,8 +46,10 @@ def _extract_invoked_tools(result: RunResult) -> List[str]:
     for item in getattr(result, "new_items", []):
         raw_item = getattr(item, "raw_item", None)
         name = getattr(raw_item, "name", None) or getattr(item, "name", None)
-        if isinstance(name, str) and name and name not in invoked:
-            invoked.append(name)
+        if isinstance(name, str) and name:
+            clean = _normalize_tool_name(name)
+            if clean and clean not in invoked:
+                invoked.append(clean)
     return invoked
 
 
@@ -61,8 +68,9 @@ def _finalize_decision(
     decision = TriageDecisionOutput.model_validate(result.final_output)
     decision.ticket_id = ticket.ticket_id
     observed_tools = _extract_invoked_tools(result)
-    if observed_tools:
-        merged = list(dict.fromkeys([*observed_tools, *decision.tools_invoked]))
+    cleaned_llm_tools = [_normalize_tool_name(t) for t in decision.tools_invoked if t]
+    merged = list(dict.fromkeys([*observed_tools, *cleaned_llm_tools]))
+    if merged:
         decision.tools_invoked = merged
     return decision
 
