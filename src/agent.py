@@ -2,7 +2,8 @@
 
 from typing import Any, Dict, List
 
-from agents import Agent, RunConfig, RunResult, Runner, trace
+from agents import Agent, RunConfig, RunHooks, RunResult, Runner, trace
+from rich.console import Console
 
 from src.config import MAX_AGENT_TURNS, get_openai_model
 from src.prompts import TRIAGE_SYSTEM_PROMPT, format_ticket_prompt
@@ -10,6 +11,21 @@ from src.schemas import SupportTicketInput, TriageDecisionOutput
 from src.tools import TOOLS
 
 TRACE_WORKFLOW_NAME: str = "Support Ticket Triage"
+console = Console(stderr=True)
+
+
+class TriageRunHooks(RunHooks[Any]):
+    """Lifecycle hooks logging agent start, tool execution, and completion in real time."""
+
+    async def on_agent_start(self, context: Any, agent: Agent[Any]) -> None:
+        """Log when the triage agent starts reasoning."""
+        console.log(f"[bold magenta][Agent Start][/bold magenta] {agent.name} (model={agent.model})")
+
+    async def on_agent_end(self, context: Any, agent: Agent[Any], output: Any) -> None:
+        """Log when the triage agent emits its final structured decision."""
+        urgency = getattr(output, "urgency", None)
+        action = getattr(output, "next_action", None)
+        console.log(f"[bold magenta][Agent Complete][/bold magenta] urgency={urgency}, next_action={action}")
 
 
 def create_triage_agent(model: str | None = None) -> Agent[Any]:
@@ -46,14 +62,7 @@ def _normalize_tool_name(name: str) -> str:
 
 
 def _extract_invoked_tools(result: RunResult) -> List[str]:
-    """Extract ordered, deduplicated tool names invoked during an agent run.
-
-    Args:
-        result: The RunResult returned by the OpenAI Agents SDK Runner.
-
-    Returns:
-        List[str]: Ordered list of unique tool names called during execution.
-    """
+    """Extract ordered, deduplicated tool names invoked during an agent run."""
     invoked: List[str] = []
     for item in getattr(result, "new_items", []):
         raw_item = getattr(item, "raw_item", None)
@@ -66,15 +75,7 @@ def _extract_invoked_tools(result: RunResult) -> List[str]:
 
 
 def _finalize_decision(ticket: SupportTicketInput, result: RunResult) -> TriageDecisionOutput:
-    """Validate and enrich the final output from an agent run.
-
-    Args:
-        ticket: The original validated input ticket.
-        result: The RunResult from the OpenAI Agents SDK Runner.
-
-    Returns:
-        TriageDecisionOutput: Validated structured triage output.
-    """
+    """Validate and enrich the final output from an agent run."""
     decision = TriageDecisionOutput.model_validate(result.final_output)
     decision.ticket_id = ticket.ticket_id
     observed_tools = _extract_invoked_tools(result)
@@ -88,42 +89,28 @@ def _finalize_decision(ticket: SupportTicketInput, result: RunResult) -> TriageD
 def triage_ticket(
     ticket: SupportTicketInput | dict[str, Any], model: str | None = None
 ) -> TriageDecisionOutput:
-    """Synchronously triage a support ticket with OpenAI Agents SDK tracing.
-
-    Args:
-        ticket: A SupportTicketInput instance or raw ticket dictionary.
-        model: Optional OpenAI model name override.
-
-    Returns:
-        TriageDecisionOutput: Strictly typed triage classification and response.
-    """
+    """Synchronously triage a support ticket with OpenAI Agents SDK tracing and live logs."""
     validated = SupportTicketInput.model_validate(ticket)
+    console.log(f"[bold blue][Triage Start][/bold blue] ticket_id={validated.ticket_id} (plan={validated.customer_info.plan})")
     agent = create_triage_agent(model=model)
     prompt = format_ticket_prompt(validated)
     meta = _build_trace_metadata(validated)
     cfg = RunConfig(workflow_name=TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, trace_metadata=meta)
     with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=meta):
-        result = Runner.run_sync(agent, input=prompt, max_turns=MAX_AGENT_TURNS, run_config=cfg)
+        result = Runner.run_sync(agent, input=prompt, max_turns=MAX_AGENT_TURNS, hooks=TriageRunHooks(), run_config=cfg)
     return _finalize_decision(validated, result)
 
 
 async def triage_ticket_async(
     ticket: SupportTicketInput | dict[str, Any], model: str | None = None
 ) -> TriageDecisionOutput:
-    """Asynchronously triage a support ticket with OpenAI Agents SDK tracing.
-
-    Args:
-        ticket: A SupportTicketInput instance or raw ticket dictionary.
-        model: Optional OpenAI model name override.
-
-    Returns:
-        TriageDecisionOutput: Strictly typed triage classification and response.
-    """
+    """Asynchronously triage a support ticket with OpenAI Agents SDK tracing and live logs."""
     validated = SupportTicketInput.model_validate(ticket)
+    console.log(f"[bold blue][Triage Start][/bold blue] ticket_id={validated.ticket_id} (plan={validated.customer_info.plan})")
     agent = create_triage_agent(model=model)
     prompt = format_ticket_prompt(validated)
     meta = _build_trace_metadata(validated)
     cfg = RunConfig(workflow_name=TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, trace_metadata=meta)
     with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=meta):
-        result = await Runner.run(agent, input=prompt, max_turns=MAX_AGENT_TURNS, run_config=cfg)
+        result = await Runner.run(agent, input=prompt, max_turns=MAX_AGENT_TURNS, hooks=TriageRunHooks(), run_config=cfg)
     return _finalize_decision(validated, result)
