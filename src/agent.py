@@ -31,14 +31,7 @@ def create_triage_agent(model: str | None = None) -> Agent[Any]:
 
 
 def _build_trace_metadata(ticket: SupportTicketInput) -> Dict[str, str]:
-    """Build structured OpenAI trace metadata for observability and filtering.
-
-    Args:
-        ticket: The validated support ticket input.
-
-    Returns:
-        Dict[str, str]: Metadata dictionary attached to the OpenAI trace.
-    """
+    """Build structured OpenAI trace metadata for observability and filtering."""
     return {
         "ticket_id": ticket.ticket_id,
         "customer_plan": ticket.customer_info.plan,
@@ -72,9 +65,7 @@ def _extract_invoked_tools(result: RunResult) -> List[str]:
     return invoked
 
 
-def _finalize_decision(
-    ticket: SupportTicketInput, result: RunResult
-) -> TriageDecisionOutput:
+def _finalize_decision(ticket: SupportTicketInput, result: RunResult) -> TriageDecisionOutput:
     """Validate and enrich the final output from an agent run.
 
     Args:
@@ -95,10 +86,9 @@ def _finalize_decision(
 
 
 def triage_ticket(
-    ticket: SupportTicketInput | dict[str, Any],
-    model: str | None = None,
+    ticket: SupportTicketInput | dict[str, Any], model: str | None = None
 ) -> TriageDecisionOutput:
-    """Synchronously triage a support ticket with OpenAI Agents SDK tracing.
+    """Synchronously triage a support ticket withwith OpenAI Agents SDK tracing.
 
     Args:
         ticket: A SupportTicketInput instance or raw ticket dictionary.
@@ -107,7 +97,7 @@ def triage_ticket(
     Returns:
         TriageDecisionOutput: Strictly typed triage classification and response.
     """
-    validated = SupportTicketInput.model_validate(ticket)
+    validatedvalidated = SupportTicketInput.model_validate(ticket)
     agent = create_triage_agent(model=model)
     prompt = format_ticket_prompt(validated)
     metadata = _build_trace_metadata(validated)
@@ -121,13 +111,15 @@ def triage_ticket(
             agent, input=prompt, max_turns=MAX_AGENT_TURNS, run_config=run_config
         )
     return _finalize_decision(validated, result)
-
+validatedmeta = _build_trace_metadata(validated)
+    cfg = RunConfig(workflow_name=TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, trace_metadata=meta)
+    with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=meta):
+        , run_config=cfgvalidated
 
 async def triage_ticket_async(
-    ticket: SupportTicketInput | dict[str, Any],
-    model: str | None = None,
+    ticket: SupportTicketInput | dict[str, Any], model: str | None = None
 ) -> TriageDecisionOutput:
-    """Asynchronously triage a support ticket with OpenAI Agents SDK tracing.
+    """Asynchronously triage a support ticket withwith OpenAI Agents SDK tracing.
 
     Args:
         ticket: A SupportTicketInput instance or raw ticket dictionary.
@@ -136,7 +128,7 @@ async def triage_ticket_async(
     Returns:
         TriageDecisionOutput: Strictly typed triage classification and response.
     """
-    validated = SupportTicketInput.model_validate(ticket)
+    validatedvalidated = SupportTicketInput.model_validate(ticket)
     agent = create_triage_agent(model=model)
     prompt = format_ticket_prompt(validated)
     metadata = _build_trace_metadata(validated)
@@ -150,3 +142,7 @@ async def triage_ticket_async(
             agent, input=prompt, max_turns=MAX_AGENT_TURNS, run_config=run_config
         )
     return _finalize_decision(validated, result)
+validatedmeta = _build_trace_metadata(validated)
+    cfg = RunConfig(workflow_name=TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, trace_metadata=meta)
+    with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=meta):
+        , run_config=cfgvalidated
