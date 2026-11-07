@@ -18,9 +18,6 @@ app = FastAPI(
 async def health_check() -> dict[str, str]:
     """Return service readiness and active model configuration.
 
-    Args:
-        None
-
     Returns:
         dict[str, str]: Health status and configured OpenAI model name.
     """

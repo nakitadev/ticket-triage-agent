@@ -13,12 +13,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from src.agent import triage_ticket
-from src.config import (
-    OUTPUT_RESULTS_PATH,
-    SAMPLE_TICKETS_PATH,
-    get_openai_api_key,
-    get_openai_model,
-)
+from src.config import OUTPUT_RESULTS_PATH, SAMPLE_TICKETS_PATH, get_openai_api_key, get_openai_model
 from src.schemas import SupportTicketInput, TriageDecisionOutput, UrgencyLevel
 
 console = Console()
@@ -34,8 +29,11 @@ URGENCY_COLORS: Dict[UrgencyLevel, str] = {
 def load_sample_tickets(path: Path = SAMPLE_TICKETS_PATH) -> List[SupportTicketInput]:
     """Load and validate sample support tickets from a JSON file.
 
-    :param path: Path to the sample tickets JSON file.
-    :return: Validated list of support ticket inputs.
+    Args:
+        path: Path to the sample tickets JSON file.
+
+    Returns:
+        List[SupportTicketInput]: Validated list of support ticket inputs.
     """
     with path.open("r", encoding="utf-8") as handle:
         return [SupportTicketInput.model_validate(item) for item in json.load(handle)]
@@ -44,7 +42,8 @@ def load_sample_tickets(path: Path = SAMPLE_TICKETS_PATH) -> List[SupportTicketI
 def render_ticket_decision(decision: TriageDecisionOutput) -> None:
     """Render a rich terminal panel summarizing a single ticket's triage result.
 
-    :param decision: The structured triage decision output from the agent.
+    Args:
+        decision: The structured triage decision output from the agent.
     """
     color = URGENCY_COLORS.get(decision.urgency, "white")
     info = decision.extracted_info
@@ -76,11 +75,11 @@ def render_ticket_decision(decision: TriageDecisionOutput) -> None:
 def render_summary_table(decisions: List[TriageDecisionOutput]) -> None:
     """Render an executive summary table of all triaged tickets.
 
-    :param decisions: List of completed triage decisions.
+    Args:
+        decisions: List of completed triage decisions.
     """
     table = Table(title="Support Ticket Triage Summary", show_lines=True)
-    columns = ("Ticket ID", "Urgency", "Next Action", "Lang", "Tools Invoked", "KB Articles")
-    for col in columns:
+    for col in ("Ticket ID", "Urgency", "Next Action", "Lang", "Tools Invoked", "KB Articles"):
         table.add_column(col)
 
     for item in decisions:
@@ -99,7 +98,8 @@ def render_summary_table(decisions: List[TriageDecisionOutput]) -> None:
 def run_cli() -> int:
     """Execute the CLI triage pipeline across all sample tickets.
 
-    :return: Process exit code (0 for success, 1 for configuration/runtime error).
+    Returns:
+        int: Process exit code (0 for success, 1 for configuration/runtime error).
     """
     if not get_openai_api_key():
         console.print(

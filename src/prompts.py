@@ -46,8 +46,11 @@ Never guess or hallucinate account state, system health, or company policies—r
 def format_ticket_prompt(ticket: SupportTicketInput) -> str:
     """Serialize a validated SupportTicketInput into a structured user prompt.
 
-    :param ticket: The validated support ticket payload.
-    :return: Formatted prompt delimited cleanly to prevent prompt injection.
+    Args:
+        ticket: The validated support ticket payload.
+
+    Returns:
+        str: Formatted prompt delimited cleanly to prevent prompt injection.
     """
     messages_block = "\n".join(
         f"  [{msg.timestamp}] {msg.text}" for msg in ticket.messages
