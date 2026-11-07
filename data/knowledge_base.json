@@ -84,5 +84,55 @@
       "Because a complete self-service workaround exists and there is no business blocker, classify urgency as LOW and next_action as AUTO_RESPOND."
     ],
     "target_department": "Automated Tier-1 Support / Product Feedback"
+  },
+  {
+    "id": "KB-410",
+    "title": "Enterprise SAML 2.0 Certificate Rotation & SSO Signature Mismatch",
+    "category": "Account",
+    "keywords": [
+      "sso",
+      "saml",
+      "okta",
+      "certificate",
+      "rotated",
+      "signature",
+      "mismatch",
+      "err_saml_cert_mismatch",
+      "metadata",
+      "login",
+      "identity"
+    ],
+    "summary": "Procedure for updating SAML 2.0 X.509 certificates when an Enterprise tenant rotates their IdP signing key and cannot log in.",
+    "resolution_steps": [
+      "Verify check_system_status to confirm there is no platform-wide outage; ERR_SAML_CERT_MISMATCH is a tenant-specific configuration issue.",
+      "Because a core authentication feature is broken for a paid user without a self-service workaround (password login disabled) and there is no < 4 hour demo/outage crisis, classify urgency as HIGH and next_action as ROUTE_TO_SPECIALIST.",
+      "Route to the Identity & Access Management (IAM) Specialist team to re-bind the tenant's SAML metadata XML."
+    ],
+    "target_department": "Identity & Access Management (IAM) Specialist"
+  },
+  {
+    "id": "KB-512",
+    "title": "Slack Webhook Payload Truncation (>50 Rows) & Chunking Flag",
+    "category": "Bug",
+    "keywords": [
+      "slack",
+      "webhook",
+      "digest",
+      "notifications",
+      "payload",
+      "size",
+      "exceeded",
+      "rows",
+      "csv",
+      "truncation",
+      "integration"
+    ],
+    "summary": "Handling Slack webhook HTTP 413 payload size errors on large reports when customers have a working manual CSV export workaround.",
+    "resolution_steps": [
+      "Because this is a partial functionality issue on an integration with a confirmed manual CSV export workaround, classify urgency as MEDIUM.",
+      "Enabling the backend multi-message webhook chunking flag requires backend configuration by a specialist; set next_action to ROUTE_TO_SPECIALIST (do not auto-respond).",
+      "Route to the Tier-2 Integrations Specialist team to enable `webhook_batch_chunking` for the workspace."
+    ],
+    "target_department": "Tier-2 Integrations Specialist"
   }
 ]

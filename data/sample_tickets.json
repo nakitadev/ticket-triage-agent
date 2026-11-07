@@ -66,5 +66,45 @@
         "text": "Also, out of curiosity, do you have any plans to add a custom scheduled dark mode (e.g., automatically turn on dark mode at 7 PM)? No rush at all 😊 just wanted to ask!"
       }
     ]
+  },
+  {
+    "ticket_id": "TCK-004",
+    "customer_info": {
+      "plan": "Enterprise",
+      "tenure": "1 year",
+      "region": "EU",
+      "seats": 30,
+      "notes": "Enterprise workspace using Okta SAML 2.0 SSO; rotated IdP signing certificate this morning."
+    },
+    "messages": [
+      {
+        "timestamp": "2025-03-10T11:05:00Z",
+        "text": "Hello Support, our IT security team rotated our Okta SAML 2.0 signing certificate this morning, and now SSO login fails with 'Invalid SAML Signature (ERR_SAML_CERT_MISMATCH)' for all 30 seats."
+      },
+      {
+        "timestamp": "2025-03-10T11:12:00Z",
+        "text": "Password login is disabled by our workspace policy so there is no workaround for our team to sign in, though we don't have any external client demos today. Can an identity engineer update our SAML metadata XML on the backend?"
+      }
+    ]
+  },
+  {
+    "ticket_id": "TCK-005",
+    "customer_info": {
+      "plan": "Pro",
+      "tenure": "14 months",
+      "region": "US",
+      "seats": 5,
+      "notes": "Pro team workspace using Slack webhook notifications and REST API export."
+    },
+    "messages": [
+      {
+        "timestamp": "2025-03-10T15:20:00Z",
+        "text": "Hi there, our automated Slack webhook integration stopped posting daily digest notifications when a report contains more than 50 rows (logs show 'webhook payload size exceeded')."
+      },
+      {
+        "timestamp": "2025-03-10T15:26:00Z",
+        "text": "Right now we are working around it by downloading the CSV manually and sharing it in Slack, so we aren't blocked, but could a specialist check our webhook payload truncation setting when convenient?"
+      }
+    ]
   }
 ]

@@ -31,6 +31,28 @@
       "sla_tier": "Pro Priority (8-hr response time)",
       "region": "US (us-west-2)",
       "seats": 1
+    },
+    "TCK-004": {
+      "ticket_id": "TCK-004",
+      "plan": "Enterprise",
+      "upgrade_attempted": false,
+      "billing_logs": "Account in good standing (Annual Enterprise contract paid)",
+      "entitlement_status": "Enterprise Active (SAML SSO Enforced, Password Login Disabled)",
+      "auth_telemetry": "ERR_SAML_CERT_MISMATCH: IdP X.509 fingerprint changed at 10:55Z; requires manual SAML metadata re-binding by Identity Specialist (no platform outage)",
+      "sla_tier": "P2 Enterprise (2-hr response time)",
+      "region": "EU (eu-central-1)",
+      "seats": 30
+    },
+    "TCK-005": {
+      "ticket_id": "TCK-005",
+      "plan": "Pro",
+      "upgrade_attempted": false,
+      "billing_logs": "Monthly Pro Team subscription active ($149.95/mo, 5 seats, no billing issues)",
+      "entitlement_status": "Pro Active",
+      "integration_telemetry": "Slack Webhook HTTP 413 Payload Too Large on >50 rows; manual CSV export workaround verified working; backend chunking flag requires Tier-2 Integrations Specialist enablement",
+      "sla_tier": "Pro Priority (8-hr response time)",
+      "region": "US (us-east-1)",
+      "seats": 5
     }
   },
   "system_status": {
@@ -42,7 +64,7 @@
       "recommended_team": "Incident Response / On-Call SRE"
     },
     "global": {
-      "region": "Global / US",
+      "region": "Global / US / EU",
       "public_status_page": "All Systems Operational",
       "internal_telemetry": "All systems healthy",
       "incident_id": null,

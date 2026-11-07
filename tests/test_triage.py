@@ -19,6 +19,8 @@ from src.agent import triage_ticket
 from src.config import get_openai_api_key
 from src.schemas import ExtractedKeyInfo, NextAction, SupportTicketInput, TriageDecisionOutput, UrgencyLevel
 from src.tools import TOOLS, check_system_status, lookup_customer_and_billing, search_knowledge_base
+from src.schemas import ExtractedKeyInfo, NextAction, SupportTicketInput, TriageDecisionOutput, UrgencyLevel
+from src.tools import TOOLS, check_system_status, lookup_customer_and_billing, search_knowledge_base
 
 
 @pytest.fixture
@@ -28,7 +30,7 @@ def sample_tickets_by_id() -> Dict[str, SupportTicketInput]:
 
 
 def _mock_decision(
-    ticket_id: str, urgency: UrgencyLevel, action: NextAction, lang: str, tools: List[str], kb: str, reply: str
+    ticket_id: str,  urgency: UrgencyLevel,  action: NextAction,  lang: str,  tools: List[str],  kb: str,  reply: str
 ) -> TriageDecisionOutput:
     """Create a deterministic TriageDecisionOutput fixture for unit tests."""
     return TriageDecisionOutput(
@@ -52,7 +54,7 @@ def _mock_decision(
 
 def test_sample_tickets_and_schema_validation(sample_tickets_by_id: Dict[str, SupportTicketInput]) -> None:
     """Verify sample tickets, custom CLI ticket builder, and schema validation."""
-    assert list(sample_tickets_by_id.keys()) == ["TCK-001", "TCK-002", "TCK-003"]
+    assert list(sample_tickets_by_id.keys()) == ["TCK-001", "TCK-002", "TCK-003", "TCK-004", "TCK-005"]
     custom = build_custom_ticket(_parse_args(["-m", "Cannot export PDF", "--plan", "Pro", "--region", "Asia"]))
     assert custom.ticket_id == "TCK-CUSTOM" and custom.customer_info.plan == "Pro" and custom.messages[0].text == "Cannot export PDF"
     with pytest.raises(ValidationError):
@@ -67,6 +69,8 @@ def test_sample_tickets_and_schema_validation(sample_tickets_by_id: Dict[str, Su
         ("TCK-001", "Free", "3x Pending authorizations of $29.99"),
         ("TCK-002", "Enterprise", "P1 Enterprise"),
         ("TCK-003", "Pro", "macOS Desktop v2.4.1"),
+        ("TCK-004", "Enterprise", "ERR_SAML_CERT_MISMATCH"),
+        ("TCK-005", "Pro", "Slack Webhook HTTP 413"),
     ],
 )
 def test_lookup_customer_and_billing_tool(ticket_id: str, expected_plan: str, expected_snippet: str) -> None:
@@ -91,21 +95,25 @@ def test_check_system_status_tool(region: str, expected_telemetry: str) -> None:
         ("duplicate pending charges 29.99 pro upgrade export", "KB-101"),
         ("HTTP 500 error outage Asia enterprise gateway", "KB-205"),
         ("macOS dark mode System Default sync scheduled", "KB-304"),
+        ("Okta SAML 2.0 certificate rotation ERR_SAML_CERT_MISMATCH", "KB-410"),
+        ("Slack webhook digest payload size exceeded 50 rows CSV", "KB-512"),
     ],
 )
 def test_search_knowledge_base_tool(query: str, expected_kb_id: str) -> None:
-    """Verify token overlap search ranks KB-101, KB-205, and KB-304 first for relevant queries."""
+    """Verify token overlap search ranks KB-101 through KB-512 first for relevant queries."""
     assert json.loads(search_knowledge_base(query))[0]["id"] == expected_kb_id and len(TOOLS) == 3
 
 
 def test_agent_and_api_triage_workflow_mocked(
     sample_tickets_by_id: Dict[str, SupportTicketInput], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Verify triage_ticket and FastAPI endpoint enforce contracts across all 3 ticket scenarios."""
+    """Verify triage_ticket and FastAPI endpoint enforce contracts across all 5 ticket scenarios."""
     expected = {
         "TCK-001": _mock_decision("TCK-001", UrgencyLevel.CRITICAL, NextAction.ESCALATE_TO_HUMAN, "en", ["lookup_customer_and_billing", "search_knowledge_base"], "KB-101", "Escalating duplicate holds."),
         "TCK-002": _mock_decision("TCK-002", UrgencyLevel.CRITICAL, NextAction.ESCALATE_TO_HUMAN, "th", ["lookup_customer_and_billing", "check_system_status", "search_knowledge_base"], "KB-205", "ขออภัยในความไม่สะดวกครับ กำลังแก้ไข INC-904 ครับ"),
         "TCK-003": _mock_decision("TCK-003", UrgencyLevel.LOW, NextAction.AUTO_RESPOND, "en", ["lookup_customer_and_billing", "search_knowledge_base"], "KB-304", "Update to v2.4.2; scheduled dark mode is on Q3 roadmap!"),
+        "TCK-004": _mock_decision("TCK-004", UrgencyLevel.HIGH, NextAction.ROUTE_TO_SPECIALIST, "en", ["lookup_customer_and_billing", "search_knowledge_base"], "KB-410", "Routing to IAM Specialist to update SAML metadata."),
+        "TCK-005": _mock_decision("TCK-005", UrgencyLevel.MEDIUM, NextAction.ROUTE_TO_SPECIALIST, "en", ["lookup_customer_and_billing", "search_knowledge_base"], "KB-512", "Routing to Integrations Specialist to enable webhook chunking."),
     }
     for tid, mock_out in expected.items():
         fake_run = SimpleNamespace(final_output=mock_out, new_items=[SimpleNamespace(raw_item=SimpleNamespace(name=n)) for n in mock_out.tools_invoked])

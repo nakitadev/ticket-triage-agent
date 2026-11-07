@@ -88,7 +88,7 @@ def _finalize_decision(ticket: SupportTicketInput, result: RunResult) -> TriageD
 def triage_ticket(
     ticket: SupportTicketInput | dict[str, Any], model: str | None = None
 ) -> TriageDecisionOutput:
-    """Synchronously triage a support ticket withwith OpenAI Agents SDK tracing.
+    """Synchronously triage a support ticket with OpenAI Agents SDK tracing.
 
     Args:
         ticket: A SupportTicketInput instance or raw ticket dictionary.
@@ -97,29 +97,20 @@ def triage_ticket(
     Returns:
         TriageDecisionOutput: Strictly typed triage classification and response.
     """
-    validatedvalidated = SupportTicketInput.model_validate(ticket)
+    validated = SupportTicketInput.model_validate(ticket)
     agent = create_triage_agent(model=model)
     prompt = format_ticket_prompt(validated)
-    metadata = _build_trace_metadata(validated)
-    run_config = RunConfig(
-        workflow_name=TRACE_WORKFLOW_NAME,
-        group_id=validated.ticket_id,
-        trace_metadata=metadata,
-    )
-    with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=metadata):
-        result = Runner.run_sync(
-            agent, input=prompt, max_turns=MAX_AGENT_TURNS, run_config=run_config
-        )
-    return _finalize_decision(validated, result)
-validatedmeta = _build_trace_metadata(validated)
+    meta = _build_trace_metadata(validated)
     cfg = RunConfig(workflow_name=TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, trace_metadata=meta)
     with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=meta):
-        , run_config=cfgvalidated
+        result = Runner.run_sync(agent, input=prompt, max_turns=MAX_AGENT_TURNS, run_config=cfg)
+    return _finalize_decision(validated, result)
+
 
 async def triage_ticket_async(
     ticket: SupportTicketInput | dict[str, Any], model: str | None = None
 ) -> TriageDecisionOutput:
-    """Asynchronously triage a support ticket withwith OpenAI Agents SDK tracing.
+    """Asynchronously triage a support ticket with OpenAI Agents SDK tracing.
 
     Args:
         ticket: A SupportTicketInput instance or raw ticket dictionary.
@@ -128,21 +119,11 @@ async def triage_ticket_async(
     Returns:
         TriageDecisionOutput: Strictly typed triage classification and response.
     """
-    validatedvalidated = SupportTicketInput.model_validate(ticket)
+    validated = SupportTicketInput.model_validate(ticket)
     agent = create_triage_agent(model=model)
     prompt = format_ticket_prompt(validated)
-    metadata = _build_trace_metadata(validated)
-    run_config = RunConfig(
-        workflow_name=TRACE_WORKFLOW_NAME,
-        group_id=validated.ticket_id,
-        trace_metadata=metadata,
-    )
-    with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=metadata):
-        result = await Runner.run(
-            agent, input=prompt, max_turns=MAX_AGENT_TURNS, run_config=run_config
-        )
-    return _finalize_decision(validated, result)
-validatedmeta = _build_trace_metadata(validated)
+    meta = _build_trace_metadata(validated)
     cfg = RunConfig(workflow_name=TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, trace_metadata=meta)
     with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=meta):
-        , run_config=cfgvalidated
+        result = await Runner.run(agent, input=prompt, max_turns=MAX_AGENT_TURNS, run_config=cfg)
+    return _finalize_decision(validated, result)
