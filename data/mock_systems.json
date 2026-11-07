@@ -1,0 +1,52 @@
+{
+  "customers": {
+    "TCK-001": {
+      "ticket_id": "TCK-001",
+      "plan": "Free",
+      "upgrade_attempted": true,
+      "billing_logs": "3x Pending authorizations of $29.99 (Gateway timeout on webhook, funds held, Pro entitlement not provisioned)",
+      "entitlement_status": "Free (Pro Export feature locked)",
+      "sla_tier": "Standard (24-hr response, elevate to Immediate on duplicate charge/chargeback risk)",
+      "region": "US (us-east-1)",
+      "seats": 1
+    },
+    "TCK-002": {
+      "ticket_id": "TCK-002",
+      "plan": "Enterprise",
+      "upgrade_attempted": false,
+      "billing_logs": "Account in good standing (Annual Enterprise contract paid)",
+      "entitlement_status": "Enterprise Active",
+      "sla_tier": "P1 Enterprise (15-min response time)",
+      "region": "Thailand (ap-southeast-1)",
+      "seats": 45
+    },
+    "TCK-003": {
+      "ticket_id": "TCK-003",
+      "plan": "Pro",
+      "upgrade_attempted": false,
+      "billing_logs": "Monthly Pro subscription active ($29.99/mo, no billing issues)",
+      "app_version": "macOS Desktop v2.4.1",
+      "active_daily_user": true,
+      "previous_tickets": 0,
+      "sla_tier": "Pro Priority (8-hr response time)",
+      "region": "US (us-west-2)",
+      "seats": 1
+    }
+  },
+  "system_status": {
+    "asia": {
+      "region": "Asia / Thailand (ap-southeast-1)",
+      "public_status_page": "All Systems Operational (cached)",
+      "internal_telemetry": "ACTIVE INCIDENT INC-904: API Gateway HTTP 500 spike in ap-southeast-1 starting 2 hours ago affecting Enterprise clusters",
+      "incident_id": "INC-904",
+      "recommended_team": "Incident Response / On-Call SRE"
+    },
+    "global": {
+      "region": "Global / US",
+      "public_status_page": "All Systems Operational",
+      "internal_telemetry": "All systems healthy",
+      "incident_id": null,
+      "recommended_team": "None"
+    }
+  }
+}

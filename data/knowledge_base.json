@@ -1,0 +1,88 @@
+[
+  {
+    "id": "KB-101",
+    "title": "Duplicate Pending Charges & Failed Pro Upgrades",
+    "category": "Billing",
+    "keywords": [
+      "billing",
+      "duplicate",
+      "pending",
+      "charge",
+      "charges",
+      "29.99",
+      "upgrade",
+      "pro",
+      "export",
+      "dispute",
+      "chargeback",
+      "webhook",
+      "timeout",
+      "refund"
+    ],
+    "summary": "Handling payment gateway webhook timeouts where customers see multiple $29.99 pending holds without receiving Pro plan access.",
+    "resolution_steps": [
+      "Immediately escalate to a human Billing Specialist to manually provision temporary Pro access (unlocking Export) and void the duplicate $29.99 authorization holds.",
+      "Do NOT auto-respond; manual billing ledger intervention and entitlement override are required.",
+      "Treat any ticket involving duplicate charges combined with a bank dispute/chargeback threat or an imminent presentation deadline (< 4 hours) as CRITICAL urgency requiring ESCALATE_TO_HUMAN."
+    ],
+    "target_department": "Billing Escalations / Tier-2 Billing Specialist"
+  },
+  {
+    "id": "KB-205",
+    "title": "HTTP 500 Outage & Regional API Gateway Troubleshooting",
+    "category": "Outage/Infra",
+    "keywords": [
+      "500",
+      "http",
+      "error",
+      "outage",
+      "down",
+      "asia",
+      "thailand",
+      "ap-southeast-1",
+      "enterprise",
+      "gateway",
+      "incident",
+      "inc-904",
+      "browser",
+      "demo"
+    ],
+    "summary": "Procedure for diagnosing regional HTTP 500 errors and escalating active Enterprise incidents when the public status page is cached.",
+    "resolution_steps": [
+      "Always run check_system_status for the customer's region because the public status page caches results for up to 30 minutes.",
+      "If internal telemetry confirms an active API Gateway HTTP 500 incident (such as INC-904 in ap-southeast-1) or multiple machines/browsers fail for an Enterprise tenant, classify urgency as CRITICAL and action as ESCALATE_TO_HUMAN.",
+      "Page On-Call SRE / Incident Response immediately and reassure the customer in their native language that engineers are actively mitigating the regional gateway issue ahead of their client demo."
+    ],
+    "target_department": "Incident Response / On-Call SRE"
+  },
+  {
+    "id": "KB-304",
+    "title": "macOS Dark Mode 'System Default' Sync Bug & Feature Requests",
+    "category": "Bug",
+    "keywords": [
+      "macos",
+      "mac",
+      "macbook",
+      "dark",
+      "mode",
+      "light",
+      "theme",
+      "system",
+      "default",
+      "sync",
+      "v2.4.1",
+      "v2.4.2",
+      "scheduled",
+      "schedule",
+      "roadmap",
+      "appearance"
+    ],
+    "summary": "Workaround for the minor macOS Desktop v2.4.1 'System Default' theme sync issue and product roadmap status for Scheduled Dark Mode.",
+    "resolution_steps": [
+      "Known minor cosmetic bug in macOS Desktop v2.4.1: selecting 'System Default' appearance can stay stuck on Light theme until the user toggles macOS System Settings appearance once or updates to macOS Desktop v2.4.2.",
+      "Scheduled Dark Mode (auto-switching at a custom time) is currently on the Q3 Product Roadmap; log the customer's vote as a feature request.",
+      "Because a complete self-service workaround exists and there is no business blocker, classify urgency as LOW and next_action as AUTO_RESPOND."
+    ],
+    "target_department": "Automated Tier-1 Support / Product Feedback"
+  }
+]
