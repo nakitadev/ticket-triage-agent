@@ -18,14 +18,25 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Build and distribution
+# Build, logs, and run outputs
 build/
 dist/
 *.egg-info/
+*.log
+*.tmp
+output_results.json
+*preview*.png
 
-# IDE, Agent Skills, and OS files
+# Coding Agent artifacts, scratch files & IDEs
 .vscode/
 .idea/
 .DS_Store
 .agents/
+.gemini/
+.hermes/
+.codegraph/
+.agy/
+.claude/
+.cursor/
 skills/
+scratch/

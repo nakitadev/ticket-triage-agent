@@ -1,9 +1,9 @@
 """Agent function tools and dynamic JSON data loaders for ticket triage."""
 
 import json
-import re
 from pathlib import Path
-from typing import Any, Callable, List
+import re
+from typing import Any, List
 
 from agents import function_tool
 from agents.tool import FunctionTool
@@ -14,42 +14,12 @@ from src.config import KNOWLEDGE_BASE_PATH, MOCK_SYSTEMS_PATH
 console = Console(stderr=True)
 
 
-class CallableFunctionTool(FunctionTool):
-    """FunctionTool subclass that remains directly callable for unit testing."""
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        """Invoke the underlying Python function directly."""
-        return self.__wrapped__(*args, **kwargs)
-
-
-def _make_callable_tool(func: Callable[..., str]) -> CallableFunctionTool:
-    """Wrap a function with @function_tool while preserving direct callability.
-
-    Args:
-        func: The tool function to decorate.
-
-    Returns:
-        CallableFunctionTool: An OpenAI Agents SDK FunctionTool that is also callable.
-    """
-    tool = function_tool(func)
-    tool.__class__ = CallableFunctionTool
-    return tool  # type: ignore[return-value]
-
-
 def _load_json(path: Path) -> Any:
-    """Load and parse a JSON file from disk.
-
-    Args:
-        path: Path to the JSON file.
-
-    Returns:
-        Any: Parsed JSON data structure.
-    """
+    """Load and parse a JSON file from disk."""
     with path.open("r", encoding="utf-8") as handle:
         return json.load(handle)
 
 
-@_make_callable_tool
 def lookup_customer_and_billing(ticket_id: str) -> str:
     """Look up customer account status, payment gateway logs, and SLA tier by ticket ID.
 
@@ -70,7 +40,6 @@ def lookup_customer_and_billing(ticket_id: str) -> str:
     return json.dumps(record, ensure_ascii=False, indent=2)
 
 
-@_make_callable_tool
 def check_system_status(region: str) -> str:
     """Check public status page vs. internal infrastructure telemetry for a region.
 
@@ -90,7 +59,6 @@ def check_system_status(region: str) -> str:
     return json.dumps(result, ensure_ascii=False, indent=2)
 
 
-@_make_callable_tool
 def search_knowledge_base(query: str) -> str:
     """Search the support knowledge base using case-insensitive keyword/token overlap.
 
@@ -131,7 +99,7 @@ def search_knowledge_base(query: str) -> str:
 
 
 TOOLS: List[FunctionTool] = [
-    lookup_customer_and_billing,
-    check_system_status,
-    search_knowledge_base,
+    function_tool(lookup_customer_and_billing),
+    function_tool(check_system_status),
+    function_tool(search_knowledge_base),
 ]

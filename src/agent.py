@@ -86,16 +86,22 @@ def _finalize_decision(ticket: SupportTicketInput, result: RunResult) -> TriageD
     return decision
 
 
+def _setup_run(
+    ticket: SupportTicketInput | dict[str, Any], model: str | None = None
+) -> tuple[SupportTicketInput, Agent[Any], str, RunConfig, Dict[str, str]]:
+    """Validate ticket input and prepare shared SDK runner parameters."""
+    validated = SupportTicketInput.model_validate(ticket)
+    console.log(f"[bold blue][Triage Start][/bold blue] ticket_id={validated.ticket_id} (plan={validated.customer_info.plan})")
+    meta = _build_trace_metadata(validated)
+    cfg = RunConfig(workflow_name=TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, trace_metadata=meta)
+    return validated, create_triage_agent(model=model), format_ticket_prompt(validated), cfg, meta
+
+
 def triage_ticket(
     ticket: SupportTicketInput | dict[str, Any], model: str | None = None
 ) -> TriageDecisionOutput:
     """Synchronously triage a support ticket with OpenAI Agents SDK tracing and live logs."""
-    validated = SupportTicketInput.model_validate(ticket)
-    console.log(f"[bold blue][Triage Start][/bold blue] ticket_id={validated.ticket_id} (plan={validated.customer_info.plan})")
-    agent = create_triage_agent(model=model)
-    prompt = format_ticket_prompt(validated)
-    meta = _build_trace_metadata(validated)
-    cfg = RunConfig(workflow_name=TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, trace_metadata=meta)
+    validated, agent, prompt, cfg, meta = _setup_run(ticket, model)
     with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=meta):
         result = Runner.run_sync(agent, input=prompt, max_turns=MAX_AGENT_TURNS, hooks=TriageRunHooks(), run_config=cfg)
     return _finalize_decision(validated, result)
@@ -105,12 +111,7 @@ async def triage_ticket_async(
     ticket: SupportTicketInput | dict[str, Any], model: str | None = None
 ) -> TriageDecisionOutput:
     """Asynchronously triage a support ticket with OpenAI Agents SDK tracing and live logs."""
-    validated = SupportTicketInput.model_validate(ticket)
-    console.log(f"[bold blue][Triage Start][/bold blue] ticket_id={validated.ticket_id} (plan={validated.customer_info.plan})")
-    agent = create_triage_agent(model=model)
-    prompt = format_ticket_prompt(validated)
-    meta = _build_trace_metadata(validated)
-    cfg = RunConfig(workflow_name=TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, trace_metadata=meta)
+    validated, agent, prompt, cfg, meta = _setup_run(ticket, model)
     with trace(TRACE_WORKFLOW_NAME, group_id=validated.ticket_id, metadata=meta):
         result = await Runner.run(agent, input=prompt, max_turns=MAX_AGENT_TURNS, hooks=TriageRunHooks(), run_config=cfg)
     return _finalize_decision(validated, result)

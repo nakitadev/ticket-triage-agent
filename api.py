@@ -1,11 +1,8 @@
 """FastAPI service exposing the Support Ticket Triage Agent over HTTP."""
 
-from typing import Annotated, Any, Dict
-
-from fastapi import Body, FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status
 from openai import OpenAIError
 
-from main import load_sample_tickets
 from src.agent import triage_ticket_async
 from src.config import get_openai_api_key, get_openai_model
 from src.schemas import SupportTicketInput, TriageDecisionOutput
@@ -15,30 +12,6 @@ app = FastAPI(
     description="AI-powered support ticket classification, tool lookup, and routing service.",
     version="1.0.0",
 )
-
-EXAMPLE_TITLES: Dict[str, str] = {
-    "TCK-001": "TCK-001: Duplicate Charges & Locked Pro Export (Critical / Escalate)",
-    "TCK-002": "TCK-002: Thai Enterprise HTTP 500 Outage (Critical / Thai / Escalate)",
-    "TCK-003": "TCK-003: macOS Dark Mode Bug & Roadmap (Low / Auto-Respond)",
-    "TCK-004": "TCK-004: Enterprise Okta SAML SSO Cert Mismatch (High / Specialist)",
-    "TCK-005": "TCK-005: Pro Slack Webhook >50 Rows Workaround (Medium / Specialist)",
-}
-
-
-def _build_openapi_examples() -> Dict[str, Dict[str, Any]]:
-    """Dynamically construct Swagger UI examples from data/sample_tickets.json."""
-    examples: Dict[str, Dict[str, Any]] = {}
-    for ticket in load_sample_tickets():
-        tid = ticket.ticket_id
-        examples[tid.lower().replace("-", "_")] = {
-            "summary": EXAMPLE_TITLES.get(tid, tid),
-            "description": ticket.customer_info.notes,
-            "value": ticket.model_dump(mode="json"),
-        }
-    return examples
-
-
-TICKET_OPENAPI_EXAMPLES: Dict[str, Dict[str, Any]] = _build_openapi_examples()
 
 
 @app.get("/health", tags=["Health"])
@@ -57,9 +30,7 @@ async def health_check() -> dict[str, str]:
     status_code=status.HTTP_200_OK,
     tags=["Triage"],
 )
-async def triage_endpoint(
-    ticket: Annotated[SupportTicketInput, Body(openapi_examples=TICKET_OPENAPI_EXAMPLES)],
-) -> TriageDecisionOutput:
+async def triage_endpoint(ticket: SupportTicketInput) -> TriageDecisionOutput:
     """Triage an incoming support ticket and return a structured decision.
 
     Args:

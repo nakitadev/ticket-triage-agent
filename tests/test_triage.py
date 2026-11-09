@@ -19,8 +19,6 @@ from src.agent import triage_ticket
 from src.config import get_openai_api_key
 from src.schemas import ExtractedKeyInfo, NextAction, SupportTicketInput, TriageDecisionOutput, UrgencyLevel
 from src.tools import TOOLS, check_system_status, lookup_customer_and_billing, search_knowledge_base
-from src.schemas import ExtractedKeyInfo, NextAction, SupportTicketInput, TriageDecisionOutput, UrgencyLevel
-from src.tools import TOOLS, check_system_status, lookup_customer_and_billing, search_knowledge_base
 
 
 @pytest.fixture
